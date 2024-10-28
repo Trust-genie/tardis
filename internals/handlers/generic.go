@@ -9,13 +9,13 @@ import (
 )
 
 type userinput struct {
-	key   string      `json:"binding:Key"`
-	value interface{} `json:"binding: value"`
+	Key   string      `json:"key"`
+	Value interface{} `json:"value"`
 }
 
 func Ping(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
-		"Message": "Welcome to curl",
+		"Message": "Welcome to Tardis, High Performance In-Memory Database",
 	})
 	return
 
@@ -26,14 +26,14 @@ func Create(ctx *gin.Context) {
 
 	ctx.ShouldBindBodyWithJSON(&input)
 
-	if input.key == "" || input.value == nil {
+	if input.Key == "" || input.Value == nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"Message": "InvalidKeyOrValueParameter",
 		})
 		return
 	}
 
-	err := storage.Store.Put(input.key, input.value)
+	err := storage.Store.Put(input.Key, input.Value)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"Message": "Error: Key Already Exists",
@@ -45,20 +45,46 @@ func Create(ctx *gin.Context) {
 	return
 
 }
+func Retrieve(ctx *gin.Context) {
+	var user userinput
+	ctx.ShouldBindBodyWithJSON(&user)
 
-func Update(ctx *gin.Context) {
-	var input userinput
-
-	ctx.ShouldBindBodyWithJSON(&input)
-
-	if input.key == "" || input.value == nil {
+	if user.Key == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"Message": "InvalidKeyOrValueParameter",
 		})
 		return
 	}
 
-	err := storage.Store.Insert(input.key, input.value)
+	value, err := storage.Store.Get(user.Key)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Error: InvalidKey",
+		})
+
+		return
+	}
+
+	//return value
+	ctx.JSON(http.StatusOK, gin.H{
+		user.Key: value,
+	})
+
+}
+
+func Update(ctx *gin.Context) {
+	var input userinput
+
+	ctx.ShouldBindBodyWithJSON(&input)
+
+	if input.Key == "" || input.Value == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"Message": "InvalidKeyOrValueParameter",
+		})
+		return
+	}
+
+	err := storage.Store.Insert(input.Key, input.Value)
 	if err != nil {
 		logger.Log.Error(err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -77,14 +103,14 @@ func Delete(ctx *gin.Context) {
 	var input userinput
 
 	ctx.ShouldBindBodyWithJSON(&input)
-	if input.key == "" {
+	if input.Key == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"Message": "InvalidKeyParameter",
 		})
 		return
 	}
 
-	storage.Store.Delete(input.key)
+	storage.Store.Delete(input.Key)
 	ctx.Status(http.StatusOK)
 
 }

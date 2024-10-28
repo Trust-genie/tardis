@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-	"tardis/internals/handlers"
+	"tardis/internals/controllers"
 	"tardis/internals/routers"
 
 	"github.com/joho/godotenv"
@@ -26,10 +26,7 @@ func main() {
 	router := routers.NewRouter()
 
 	//register routers
-	router.GET("/", handlers.Ping)
-	router.POST("/", handlers.Create)
-	router.PATCH("/update", handlers.Update)
-	router.DELETE("/delete", handlers.Delete)
+	controllers.RegisterStoreRoutes(router)
 
 	//start router
 	router.Run(":" + port)
